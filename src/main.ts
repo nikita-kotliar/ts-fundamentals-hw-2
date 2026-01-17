@@ -19,10 +19,10 @@ if (!loadMoreButton) throw new Error("Missing .load-more element");
 if (!gallery) throw new Error("Missing .gallery element");
 if (!loader) throw new Error("Missing .loader element");
 
-const ui = initRender({ 
-  gallery, 
-  loader, 
-  loadMoreBtn: loadMoreButton 
+const ui = initRender({
+  gallery,
+  loader,
+  loadMoreBtn: loadMoreButton,
 });
 
 searchForm.addEventListener("submit", onFormSubmit);
@@ -32,8 +32,10 @@ async function onFormSubmit(event: SubmitEvent): Promise<void> {
   event.preventDefault();
 
   const formElement = event.currentTarget as HTMLFormElement;
-  const inputElement = formElement.querySelector<HTMLInputElement>('input[name="search-text"]');
-  
+  const inputElement = formElement.querySelector<HTMLInputElement>(
+    'input[name="search-text"]',
+  );
+
   if (!inputElement) return;
 
   const queryValue = inputElement.value.trim();
@@ -42,7 +44,7 @@ async function onFormSubmit(event: SubmitEvent): Promise<void> {
   if (query === "") {
     iziToast.warning({
       message: "Please enter a search query.",
-      position: "topRight"
+      position: "topRight",
     });
     return;
   }
@@ -68,12 +70,15 @@ async function fetchAndRender(): Promise<void> {
     ui.showLoader();
     ui.hideLoadMore();
 
-    const data: PixabayResponse = await getImagesByQuery(query, pagination.current);
+    const data: PixabayResponse = await getImagesByQuery(
+      query,
+      pagination.current,
+    );
 
     if (isInitial && data.hits.length === 0) {
       iziToast.error({
         message: "There are no images matching your search query. Try again!",
-        position: "topRight"
+        position: "topRight",
       });
       return;
     }
@@ -81,20 +86,21 @@ async function fetchAndRender(): Promise<void> {
     ui.renderGallery(data.hits);
 
     const isEndOfResults = pagination.isEnd(data.totalHits);
-    
+
     if (isEndOfResults) {
       ui.hideLoadMore();
       if (!isInitial) {
-         iziToast.info({ message: "You've reached the end of search results." });
+        iziToast.info({ message: "You've reached the end of search results." });
       }
       return;
     }
 
     ui.showLoadMore();
-
   } catch (error) {
     console.error(error);
-    iziToast.error({ message: "An error occurred while fetching images. Try again." });
+    iziToast.error({
+      message: "An error occurred while fetching images. Try again.",
+    });
   } finally {
     ui.hideLoader();
   }

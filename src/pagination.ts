@@ -1,10 +1,8 @@
-
-export const PER_PAGE: number = 15;
+export const PER_PAGE = 15;
 
 export default class Pagination {
-
-  private readonly perPage: number; 
-  private page: number;             
+  private readonly perPage: number;
+  private page: number;
 
   constructor(perPage: number = PER_PAGE) {
     this.perPage = perPage;
@@ -20,11 +18,11 @@ export default class Pagination {
   }
 
   next(): number {
-    this.page += 1;
-    return this.page;
+    return ++this.page;
   }
 
   isEnd(totalHits: number): boolean {
-    return this.page * this.perPage >= totalHits;
+    const totalPages = Math.ceil(totalHits / this.perPage);
+    return this.page >= totalPages;
   }
 }

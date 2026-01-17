@@ -1,8 +1,6 @@
-
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 import type { PixabayImage } from "./types/pixabay";
-
 
 export interface RenderElements {
   gallery: HTMLUListElement | null;
@@ -19,70 +17,78 @@ export interface RenderAPI {
   renderGallery: (images: PixabayImage[]) => void;
 }
 
-export function initRender(elements: RenderElements): RenderAPI {
-  if (!elements.gallery || !elements.loader || !elements.loadMoreBtn) {
+export function initRender({
+  gallery,
+  loader,
+  loadMoreBtn,
+}: RenderElements): RenderAPI {
+  if (!gallery || !loader || !loadMoreBtn) {
     throw new Error("Critical elements not found in DOM");
   }
-
-  const { gallery, loader, loadMoreBtn } = elements;
 
   const lightbox = new SimpleLightbox(".gallery a", {
     captionsData: "alt",
     captionDelay: 250,
   });
 
+  const toggleVisibility = (element: HTMLElement, isVisible: boolean) => {
+    element.classList.toggle("hidden", !isVisible);
+  };
+
+  const createImageMarkup = (image: PixabayImage): string => `
+    <li class="gallery-item">
+      <a class="gallery-link" href="${image.largeImageURL}">
+        <img
+          class="gallery-image"
+          src="${image.webformatURL}"
+          alt="${image.tags}"
+          width="360"
+        />
+      </a>
+      <div class="stats-block">
+        ${createStatsMarkup(image)}
+      </div>
+    </li>
+  `;
+
+  const createStatsMarkup = (image: PixabayImage): string => {
+    const stats = [
+      { title: "Likes", value: image.likes },
+      { title: "Views", value: image.views },
+      { title: "Comments", value: image.comments },
+      { title: "Downloads", value: image.downloads },
+    ];
+
+    return stats
+      .map(
+        ({ title, value }) => `
+          <div class="stat">
+            <p class="stat-title">${title}</p>
+            <p class="stat-value">${value}</p>
+          </div>
+        `,
+      )
+      .join("");
+  };
+
   return {
     clear() {
       gallery.innerHTML = "";
     },
     showLoader() {
-      loader.classList.remove("hidden"); 
+      toggleVisibility(loader, true);
     },
     hideLoader() {
-      loader.classList.add("hidden");
+      toggleVisibility(loader, false);
     },
     showLoadMore() {
-      loadMoreBtn.classList.remove("hidden");
+      toggleVisibility(loadMoreBtn, true);
     },
     hideLoadMore() {
-      loadMoreBtn.classList.add("hidden");
+      toggleVisibility(loadMoreBtn, false);
     },
     renderGallery(images: PixabayImage[]) {
-      const markup = images
-        .map((image) => {
-          return `
-            <li class="gallery-item">
-              <a class="gallery-link" href="${image.largeImageURL}">
-                <img
-                  class="gallery-image"
-                  src="${image.webformatURL}"
-                  alt="${image.tags}"
-                  width="360"
-                />
-              </a>
-              <div class="stats-block">
-                 <div class="stat">
-                    <p class="stat-title">Likes</p>
-                    <p class="stat-value">${image.likes}</p>
-                 </div>
-                 <div class="stat">
-                    <p class="stat-title">Views</p>
-                    <p class="stat-value">${image.views}</p>
-                 </div>
-                 <div class="stat">
-                    <p class="stat-title">Comments</p>
-                    <p class="stat-value">${image.comments}</p>
-                 </div>
-                 <div class="stat">
-                    <p class="stat-title">Downloads</p>
-                    <p class="stat-value">${image.downloads}</p>
-                 </div>
-              </div>
-            </li>
-          `;
-        })
-        .join("");
-
+      const markup = images.map(createImageMarkup).join("");
       gallery.insertAdjacentHTML("beforeend", markup);
       lightbox.refresh();
     },
