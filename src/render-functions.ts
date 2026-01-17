@@ -1,77 +1,90 @@
-import iziToast from "izitoast";
+
 import SimpleLightbox from "simplelightbox";
-import type { PixabayImage } from "./types/pixabay";
-import "izitoast/dist/css/iziToast.min.css";
 import "simplelightbox/dist/simple-lightbox.min.css";
+import type { PixabayImage } from "./types/pixabay";
 
-type RenderAPI = {};
 
-type RenderElements = {};
+export interface RenderElements {
+  gallery: HTMLUListElement | null;
+  loader: HTMLElement | null;
+  loadMoreBtn: HTMLButtonElement | null;
+}
+
+export interface RenderAPI {
+  clear: () => void;
+  showLoader: () => void;
+  hideLoader: () => void;
+  showLoadMore: () => void;
+  hideLoadMore: () => void;
+  renderGallery: (images: PixabayImage[]) => void;
+}
 
 export function initRender(elements: RenderElements): RenderAPI {
-  const { gallery, loader, loadMoreButton } = elements;
+  if (!elements.gallery || !elements.loader || !elements.loadMoreBtn) {
+    throw new Error("Critical elements not found in DOM");
+  }
 
-  // initial UI state
-  loader.style.display = "none";
-  loadMoreButton.style.display = "none";
+  const { gallery, loader, loadMoreBtn } = elements;
 
   const lightbox = new SimpleLightbox(".gallery a", {
     captionsData: "alt",
     captionDelay: 250,
   });
 
-  const createGallery = (images) => {
-    const galleryItems = images
-      .map(
-        (image) => `
-          <a href="${image.largeImageURL}">
-            <img
-              src="${image.webformatURL}"
-              alt="${image.tags}"
-              title="${image.tags}"
-              width="100"
-              height="100"
-              loading="lazy"
-            />
-          </a>`
-      )
-      .join("");
-
-    gallery.insertAdjacentHTML("beforeend", galleryItems);
-    lightbox.refresh();
-  };
-
-  const clearGallery = () => {
-    gallery.innerHTML = "";
-  };
-
-  const showLoader = () => {
-    loader.style.display = "block";
-  };
-
-  const hideLoader = () => {
-    loader.style.display = "none";
-  };
-
-  const showLoadMoreButton = () => {
-    loadMoreButton.style.display = "block";
-  };
-
-  const hideLoadMoreButton = () => {
-    loadMoreButton.style.display = "none";
-  };
-
-  const showToast = (text: string) => {
-    iziToast.info({ message: text, position: "topRight" });
-  };
-
   return {
-    createGallery,
-    clearGallery,
-    showLoader,
-    hideLoader,
-    showLoadMoreButton,
-    hideLoadMoreButton,
-    showToast,
+    clear() {
+      gallery.innerHTML = "";
+    },
+    showLoader() {
+      loader.classList.remove("hidden"); 
+    },
+    hideLoader() {
+      loader.classList.add("hidden");
+    },
+    showLoadMore() {
+      loadMoreBtn.classList.remove("hidden");
+    },
+    hideLoadMore() {
+      loadMoreBtn.classList.add("hidden");
+    },
+    renderGallery(images: PixabayImage[]) {
+      const markup = images
+        .map((image) => {
+          return `
+            <li class="gallery-item">
+              <a class="gallery-link" href="${image.largeImageURL}">
+                <img
+                  class="gallery-image"
+                  src="${image.webformatURL}"
+                  alt="${image.tags}"
+                  width="360"
+                />
+              </a>
+              <div class="stats-block">
+                 <div class="stat">
+                    <p class="stat-title">Likes</p>
+                    <p class="stat-value">${image.likes}</p>
+                 </div>
+                 <div class="stat">
+                    <p class="stat-title">Views</p>
+                    <p class="stat-value">${image.views}</p>
+                 </div>
+                 <div class="stat">
+                    <p class="stat-title">Comments</p>
+                    <p class="stat-value">${image.comments}</p>
+                 </div>
+                 <div class="stat">
+                    <p class="stat-title">Downloads</p>
+                    <p class="stat-value">${image.downloads}</p>
+                 </div>
+              </div>
+            </li>
+          `;
+        })
+        .join("");
+
+      gallery.insertAdjacentHTML("beforeend", markup);
+      lightbox.refresh();
+    },
   };
 }
